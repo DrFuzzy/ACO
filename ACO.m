@@ -11,11 +11,50 @@
 tic
 clear all; clc; close all
 
-cities = [1 43 98 45 123 12 45 322 76;1 2 43 89 32 123 67 45 47]; % cities (x,y)
+% Load TSP city files
+% -------------------
+infile='TSP/att48.tsp';
+if ischar(infile)
+    fid=fopen(infile,'r');
+else
+    disp('input file no exist');
+    return;
+end
+if fid<0
+    disp('error while open file');
+    return;
+end
+
+nodeWeight = [];
+while feof(fid)==0
+    temps=fgetl(fid);
+    if strcmp(temps,'')
+        continue;
+    elseif strncmpi('NAME',temps,4)
+        k=findstr(temps,':');
+        Name=temps(k+1:length(temps));
+    elseif strncmpi('dimension',temps,9)
+        k=findstr(temps,':');
+        d=temps(k+1:length(temps));
+        dimension=str2double(d); %str2num
+    elseif strncmpi('EDGE_WEIGHT_SECTION',temps,19)
+        formatstr = [];
+        for i=1:dimension
+            formatstr = [formatstr,'%g '];
+        end
+        nodeWeight=fscanf(fid,formatstr,[dimension,dimension]);
+        nodeWeight=nodeWeight';
+    elseif strncmpi('NODE_COORD_SECTION',temps,18) || strncmpi('DISPLAY_DATA_SECTION',temps,20)
+        nodeCoord=fscanf(fid,'%g %g %g',[3 dimension])';
+    end
+end
+fclose(fid);
+
+cities = nodeCoord(:,2:3)'; % cities (x,y)
 
 % ACO parameters
 % --------------
-iter = 200; % iterations
+iter = 2000; % iterations
 ants = 200; % number of artificial ants
 nodes = length(cities); % number of cities
 alpha = 1; % controls the influence of tau(i,j)
