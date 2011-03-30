@@ -11,6 +11,10 @@
 tic
 clear all; clc; close all
 
+% Call GUI & get axis handles
+% ---------------------------
+[h,options] = SetupGraph;
+
 % Load TSP data files
 % -------------------
 [name,comment,dimension,type,nodeCoord] = LoadTSPdata('TSP/ulysses22.tsp');
@@ -21,7 +25,7 @@ cities = nodeCoord(:,2:3)'; % cities (x,y)
 iter = 1000; % iterations
 ants = length(cities); % number of artificial ants
 nodes = length(cities); % number of cities
-alpha = 0.1; % controls the influence of tau(i,j)
+alpha = .1; % controls the influence of tau(i,j)
 beta = 10; % controls the influence of eta(i,j) (typically 1/d(i,j) )
 rho = .65; % rate of pheromone evaporation
 el = .96; % coefficient of common cost elimination.
@@ -52,19 +56,22 @@ initPlaceAll = fix(1+rand(ants,iter)*(nodes-1));
 % ---------------------
 eta(d~=0)=1./d(d~=0); % eta, heuristic value
 
-% pre-setup figures and axes - (comment for performance)
-h = SetupGraph;
+% Wait until Run is pressed
+% -------------------------
+while options(4) == 0
+    pause(.001)
+end
 
 for cycle=1:iter % iteration cycles
-    
+
     % Pick initial ants placement for the current cycle
     % -------------------------------------------------
     initPlace = initPlaceAll(:,cycle);
-    
+
     % Primary Pheromone trail value (Initialize Pheromone trails)
     % -----------------------------------------------------------
     tau = 0.0001 * ones(nodes); % tau, pheromone value
-    
+
     % Generate ants tour matrix for a cycle - ConstructAntSolutions
     % ant(i).visited(j)
     % -------------------------------------------------------------
@@ -87,27 +94,27 @@ for cycle=1:iter % iteration cycles
             end
         end
     end
-    
+
     tourMatrix=horzcat(initPlace,initPlace(:,1));
     tourMatrix2=sub2ind(size(d),tourMatrix(:,1:end-1),tourMatrix(:,2:end));
-    
+
     % Ants cost (ApplyLocalSearch - daemon actions optional)
     % ------------------------------------------------------
     f = sum(d(tourMatrix2),2)';
     cost = f;
     f = f - el * min(f); % elimination of common cost.
-    
+
     % Pheromone trail value update (MAX-MIN Ant System) - UpdatePheromones
     % --------------------------------------------------------------------
     dtau = 1 ./ f; % quantity of pheromone deposited on edge (i,j) by the i-th ant
-    
+
     for i = 1:ants
         for j = 1:nodes
             tau(tourMatrix(i,j),tourMatrix(i,j+1)) =...
                 (1 - rho) * tau(tourMatrix(i,j),tourMatrix(i,j+1)) + dtau(i);
         end
     end
-    
+
     [minCost(cycle),number] = min(cost); % minimum cost
 
     % sample & hold best closed tour
@@ -115,21 +122,20 @@ for cycle=1:iter % iteration cycles
         a = min(cost);
         bestTour = tourMatrix(number,:); % best closed route/cycle
     end
-    
+
     if a > min(cost)
         a = min(cost);
         bestTour = tourMatrix(number,:); % best closed route/cycle
     end
     bestCost(cycle) = a;
 
-    % visualize (comment for performance)
-    PlotGraph(h, cycle, number, minCost, cities, tourMatrix, bestCost, bestTour, cost);
-    
-end % main loop ends here
+    % visualize
+    PlotGraph(h, options, cycle, number, minCost, cities, tourMatrix, bestCost, bestTour, cost);
 
-%PlotGraph(h, cycle, number, minCost, cities, tourMatrix, bestCost, bestTour, cost);
+end % main loop ends here
 
 % Edge selection (Ants probability to move from node i to node j)
 % ---------------------------------------------------------------
 %prob = ((tau.^alpha).*(dtau^beta)) / sum(sum(((tau.^alpha).*(dtau^beta))));
+
 toc

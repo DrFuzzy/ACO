@@ -10,26 +10,19 @@
 %   Author: Dr. Kyriakos Deliparaschos <kdelip@mail.ntua.gr>
 %   Initial coding: August, 2010
 %--------------------------------------------------------------------------
-function h = SetupGraph
+function [h, options] = SetupGraph
 
-scrsz = get(0,'ScreenSize');
-fh = figure('Position',[scrsz(3)/4 scrsz(4)/4 scrsz(3)/2 scrsz(4)/2]);
-%set(fh,'renderer','opengl')
-h(1) = axes('Position',[.03 .04 .44 .4]);
-h(2) = axes('Position',[.03 .54 .44 .4]);
-h(3) = axes('Position',[.51 .04 .47 .9]);
-cbh = uicontrol(fh,'Style','checkbox',...
-                'String','Animation',...
-                'Value',0,'Position',[30 20 130 20],...
-                'callback',@checkbox1_Callback);
-end
+openfig('ACOGUI.fig');
 
-% --- Executes on button press in checkbox1.
-function checkbox1_Callback(hObject, eventdata, handles)
-% hObject    handle to checkbox1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+options1 = get(findobj('tag','checkbox1'),'Value');
+options2 = get(findobj('tag','checkbox2'),'Value');
+options3 = get(findobj('tag','checkbox3'),'Value');
+options4 = get(findobj('tag','pushbutton1'),'Value');
 
-global flag;
-flag = get(hObject,'Value');
+options = [options1 options2 options3 options4];
+
+h(1)=findobj('tag','axes1');
+h(2)=findobj('tag','axes2');
+h(3)=findobj('tag','axes3');
+
 end
